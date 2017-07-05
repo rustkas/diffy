@@ -1,27 +1,32 @@
-PROJECT = diffy 
-REBAR := $(shell which rebar 2>/dev/null || echo ./rebar)
-REBAR_URL := https://github.com/downloads/basho/rebar/rebar
-DIALYZER = dialyzer
+PROJECT = diffy
+
+ERL       ?= erl
+ERLC      ?= $(ERL)c
+REBAR     := ./rebar3
+REBAR_URL := https://s3.amazonaws.com/rebar3/rebar3
+DIALYZER  = dialyzer
 
 all: compile
 
-./rebar:
-	erl -noshell -s inets start -s ssl start \
-        -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar"}])' \
-        -s inets stop -s init stop
-	chmod +x ./rebar
-	
-compile: rebar
+$(REBAR):
+	$(ERL) -noshell -s inets -s ssl \
+	  -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "$(REBAR)"}])' \
+	  -s init stop
+	chmod +x $(REBAR)
+
+compile: $(REBAR)
 	$(REBAR) compile
 
-eunit: rebar
-	$(REBAR) get-dep compile
-	$(REBAR) eunit -v skip_deps=true
+test: eunit
+
+eunit: $(REBAR) compile
+	$(REBAR) eunit
 
 clean: rebar
 	$(REBAR) clean
 
-distclean: 
+distclean:
+	rm -rf _build
 	rm $(REBAR)
 
 

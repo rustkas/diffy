@@ -763,23 +763,6 @@ make_patch([{equal, Data}|T], PrePatchText, PostPatchText, Count1, Count2, [Patc
         
     make_patch(T, PrePatchText, PostPatchText, Count1+Size, Count2+Size, [P|Rest]).
 
-    
-% @doc Returns true iff Pattern is a unique match inside Text.
-unique_match(Pattern, Text) ->
-    TextSize = size(Text),
-    case binary:match(Text, Pattern) of
-        nomatch -> 
-            error(nomatch);
-        {Start, Length} when Start + 1 + Length < TextSize ->
-            %% We have a match, and we can search..
-            case binary:match(Text, Pattern, [{scope, {Start+1, TextSize-Start-1}}]) of
-                nomatch -> true;
-                {_, _} -> false
-            end;
-        {_, _} ->
-            true
-    end.
-
 
 %%
 %% Helpers
@@ -980,6 +963,23 @@ repair_head(Bin) ->
 -ifdef(TEST).
 
 -include_lib("eunit/include/eunit.hrl").
+
+% @doc Returns true iff Pattern is a unique match inside Text.
+unique_match(Pattern, Text) ->
+    TextSize = size(Text),
+    case binary:match(Text, Pattern) of
+        nomatch -> 
+            error(nomatch);
+        {Start, Length} when Start + 1 + Length < TextSize ->
+            %% We have a match, and we can search..
+            case binary:match(Text, Pattern, [{scope, {Start+1, TextSize-Start-1}}]) of
+                nomatch -> true;
+                {_, _} -> false
+            end;
+        {_, _} ->
+            true
+    end.
+
 
 repair_tail_test() ->
     ?assertEqual({<<>>, <<>>}, repair_tail(<<>>)),
