@@ -1,9 +1,9 @@
 %% @author Maas-Maarten Zeeman <mmzeeman@xs4all.nl>
-%% @copyright 2014 Maas-Maarten Zeeman
+%% @copyright 2014-2019 Maas-Maarten Zeeman
 %%
 %% @doc Diffy, an erlang diff match and patch implementation 
 %%
-%% Copyright 2014 Maas-Maarten Zeeman
+%% Copyright 2014-2019 Maas-Maarten Zeeman
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -41,7 +41,10 @@
     make_patch/1,
     make_patch/2,
 
-    text_size/1
+    text_size/1,
+
+    split_pre_and_suffix/2,
+    unique_match/2
 ]).
 
 -type diff_op() :: delete | equal | insert.
@@ -122,12 +125,7 @@ compute_diff(OldText, NewText, CheckLines) ->
         nomatch ->
             case single_char(ShortText) of
                 true ->
-                    case size(OldText) =< size(NewText) of
-                        true ->
-                            [{delete, OldText}, {insert, NewText}];
-                        false ->
-                            [{insert, OldText}, {delete, NewText}]
-                    end;
+                    [{delete, OldText}, {insert, NewText}];
                 false ->
                     try_half_match(OldText, NewText, CheckLines)
              end
@@ -379,8 +377,7 @@ diff_bisect(A, B) when is_binary(A) andalso is_binary(B) ->
     ArrA = array_from_binary(A),
     ArrB = array_from_binary(B),
     try compute_diff_bisect1(ArrA, ArrB, array:size(ArrA), array:size(ArrB)) of
-        no_overlap -> 
-            [{delete, A}, {insert, B}] 
+        no_overlap -> [{delete, A}, {insert, B}] 
     catch
         throw:{overlap, A1, B1, X, Y} ->
             diff_bisect_split(A1, B1, X, Y)
@@ -388,13 +385,13 @@ diff_bisect(A, B) when is_binary(A) andalso is_binary(B) ->
 
 compute_diff_bisect1(A, B, M, N) ->
     %% TODO, add deadline... 
-    MaxD = (M + N) div 2,
+    
+    MaxD = int_ceil((M + N) / 2),
 
     VOffset = MaxD,
     VLength = 2 * MaxD,
 
-    V1 = array:new(VLength, [{default, -1}]),
-    V2 = array:set(VOffset + 1, 0, V1),
+    V1 = array:set(VOffset + 1, 0, array:new(VLength, [{default, -1}])),
     
     Delta = M - N,
 
@@ -403,7 +400,7 @@ compute_diff_bisect1(A, B, M, N) ->
     Front = (Delta rem 2 =/= 0),
 
     %% {K1Start, K1End, K2Start, K2End, V1, V2}
-    State = #bisect_state{v1=V2, v2=V2},
+    State = #bisect_state{v1=V1, v2=V1},
 
     %% Loops
     for(0, MaxD, fun(D, S1) ->
@@ -430,25 +427,27 @@ compute_diff_bisect1(A, B, M, N) ->
                     % Ran off the bottom of the graph...
                     V = S2_1#bisect_state.k1start + 2,
                     {continue, S2_1#bisect_state{k1start=V}};
-                Front ->
+                Front =:= true ->
                     K2Offset = VOffset + Delta - K1,
-                    V2AtOffset = array:get(K2Offset, S2_1#bisect_state.v2),
-                    case K2Offset >= 0 andalso K2Offset < VLength andalso V2AtOffset =/= -1 of
-                        true ->
-                            % Mirror x2 onto top-left coordinate system.
-                            X2 = M - V2AtOffset,
-                            if 
-                                X1_1 >= X2 ->
-                                    % Overlap detected
-                                    throw({overlap, A, B, X1_1, Y1_1});
-                                true ->
-                                    {continue, S2_1}
-                            end;
+                    case K2Offset < 0 orelse K2Offset >= VLength of
+                        true -> {continue, S2_1};
                         false ->
-                            {continue, S2_1}
+                            V2AtOffset = array:get(K2Offset, S2_1#bisect_state.v2),
+                            case V2AtOffset =/= -1 of
+                                true ->
+                                    % Mirror x2 onto top-left coordinate system.
+                                    X2 = M - V2AtOffset,
+                                    if 
+                                        X1_1 >= X2 ->
+                                            % Overlap detected
+                                            throw({overlap, A, B, X1_1, Y1_1});
+                                        true ->
+                                            {continue, S2_1}
+                                    end;
+                                false -> {continue, S2_1}
+                            end
                     end;
-                true ->
-                    {continue, S2_1}
+                true -> {continue, S2_1}
             end
         end, S1),
 
@@ -477,26 +476,28 @@ compute_diff_bisect1(A, B, M, N) ->
                     % Ran off the bottom of the graph...
                     V = S4_1#bisect_state.k2start + 2,
                     {continue, S4_1#bisect_state{k2start=V}};
-                Front ->
+                Front =:= false ->
                     K1Offset = VOffset + Delta - K2,
-                    V1AtOffset = array:get(K1Offset, S4_1#bisect_state.v1),
-                    case K1Offset >= 0 andalso K1Offset < VLength andalso V1AtOffset =/= -1 of
-                        true ->
-                            X1 = V1AtOffset,
-                            Y1 = VOffset + X1 - K1Offset,
-                            if 
-                                % Mirror x2 onto top-left coordinate system.
-                                X1 >= M - X2_1 ->
-                                    % Overlap detected
-                                    throw({overlap, A, B, X1, Y1});
-                                true ->
-                                    {continue, S4_1}
-                            end;
+                    case K1Offset < 0 orelse K1Offset >= VLength of
+                        true -> {continue, S4_1};
                         false ->
-                            {continue, S4_1}
+                            V1AtOffset = array:get(K1Offset, S4_1#bisect_state.v1),
+                            case V1AtOffset =/= -1 of
+                                true ->
+                                    X1 = V1AtOffset,
+                                    Y1 = VOffset + X1 - K1Offset,
+                                    if 
+                                        % Mirror x2 onto top-left coordinate system.
+                                        X1 >= M - X2_1 ->
+                                            % Overlap detected
+                                            throw({overlap, A, B, X1, Y1});
+                                        true ->
+                                            {continue, S4_1}
+                                    end;
+                                false -> {continue, S4_1}
+                            end
                     end;
-                true ->
-                    {continue, S4_1}
+                true -> {continue, S4_1}
             end
         end, S3),
         {continue, S5}
@@ -763,6 +764,23 @@ make_patch([{equal, Data}|T], PrePatchText, PostPatchText, Count1, Count2, [Patc
         
     make_patch(T, PrePatchText, PostPatchText, Count1+Size, Count2+Size, [P|Rest]).
 
+    
+% @doc Returns true iff Pattern is a unique match inside Text.
+unique_match(Pattern, Text) ->
+    TextSize = size(Text),
+    case binary:match(Text, Pattern) of
+        nomatch -> 
+            error(nomatch);
+        {Start, Length} when Start + 1 + Length < TextSize ->
+            %% We have a match, and we can search..
+            case binary:match(Text, Pattern, [{scope, {Start+1, TextSize-Start-1}}]) of
+                nomatch -> true;
+                {_, _} -> false
+            end;
+        {_, _} ->
+            true
+    end.
+
 
 %%
 %% Helpers
@@ -824,9 +842,17 @@ for(From, To, Step, Fun, State) ->
         
 split_pre_and_suffix(Text1, Text2) ->
     Prefix = common_prefix(Text1, Text2),
-    Suffix = common_suffix(Text1, Text2),
-    MiddleText1 = binary:part(Text1, size(Prefix), size(Text1) - size(Prefix) - size(Suffix)), 
-    MiddleText2 = binary:part(Text2, size(Prefix), size(Text2) - size(Prefix) - size(Suffix)), 
+    PrefixLen = size(Prefix),
+
+    <<_:PrefixLen/binary, TailText1/binary>> = Text1,
+    <<_:PrefixLen/binary, TailText2/binary>> = Text2,
+
+    Suffix = common_suffix(TailText1, TailText2),
+    SuffixLen = size(Suffix),
+
+    MiddleText1 = binary:part(TailText1, 0, size(TailText1) - SuffixLen), 
+    MiddleText2 = binary:part(TailText2, 0, size(TailText2) - SuffixLen), 
+
     {Prefix, MiddleText1, MiddleText2, Suffix}.
 
     
@@ -956,6 +982,17 @@ repair_head(Bin) ->
     %% Illegal sequence, can't repair it.
     {<<>>, Bin}.
 
+
+%% This function can go away when we support OTP 20 and up.
+%%
+int_ceil(Number) ->
+    T = trunc(Number),
+    case (Number - T) of
+        Neg when Neg < 0 -> T;
+        Pos when Pos > 0 -> T + 1;
+        _ -> T
+    end.
+
 %%
 %% Tests
 %%
@@ -963,23 +1000,6 @@ repair_head(Bin) ->
 -ifdef(TEST).
 
 -include_lib("eunit/include/eunit.hrl").
-
-% @doc Returns true iff Pattern is a unique match inside Text.
-unique_match(Pattern, Text) ->
-    TextSize = size(Text),
-    case binary:match(Text, Pattern) of
-        nomatch -> 
-            error(nomatch);
-        {Start, Length} when Start + 1 + Length < TextSize ->
-            %% We have a match, and we can search..
-            case binary:match(Text, Pattern, [{scope, {Start+1, TextSize-Start-1}}]) of
-                nomatch -> true;
-                {_, _} -> false
-            end;
-        {_, _} ->
-            true
-    end.
-
 
 repair_tail_test() ->
     ?assertEqual({<<>>, <<>>}, repair_tail(<<>>)),
@@ -1047,7 +1067,29 @@ diff_bisect_test() ->
                   {equal,<<"e">>},
                   {insert,<<"at">>},
                   {equal,<<" a banana">>}], diff_bisect(<<"fruit flies like a banana">>, 
-        <<"fruit flies eat a banana">>)),
+                                                        <<"fruit flies eat a banana">>)),
+
+
+    %?assertEqual([{delete,<<"cat">>},
+    %              {insert,<<"map">>}], diff_bisect(<<"cat">>, <<"map">>)), 
+
+    ?assertEqual([{delete,<<"c">>},
+                  {insert,<<"m">>},
+                  {equal,<<"a">>},
+                  {delete,<<"t">>},
+                  {insert,<<"p">>}],
+                  diff_bisect(<<"cat">>, <<"map">>)), 
+
+    ?assertEqual([{equal,<<"cat ">>},
+                  {insert,<<"mouse dog sheep ">>},
+                  {insert,<<"monkey chicken ">>},
+                  {equal,<<"zebra">>}
+                 ], diff_bisect(<<"cat zebra">>, <<"cat mouse dog sheep monkey chicken zebra">>)), 
+
+    ?assertEqual([{equal, <<"text">>}],
+                 diff_bisect(<<"text">>, <<"text">>)),
+                 
+
     ok.
 
 half_match_test() ->
@@ -1085,11 +1127,13 @@ half_match_test() ->
 common_prefix_test() ->
     ?assertEqual(<<>>, common_prefix(<<"Text">>, <<"Next">>)),
     ?assertEqual(<<"T">>, common_prefix(<<"Text">>, <<"Tax">>)),
+    ?assertEqual(<<"text">>, common_prefix(<<"text">>, <<"text">>)),
     ok.
 
 common_suffix_test() ->
     ?assertEqual(<<"ext">>, common_suffix(<<"Text">>, <<"Next">>)),
     ?assertEqual(<<>>, common_suffix(<<"Text">>, <<"Tax">>)),
+    ?assertEqual(<<"text">>, common_suffix(<<"text">>, <<"text">>)),
     ok.
 
 split_pre_and_suffix_test() ->
@@ -1103,6 +1147,10 @@ split_pre_and_suffix_test() ->
        split_pre_and_suffix(<<"aabbdd">>, <<"aaccdd">>)),
     ?assertEqual({<<"aa">>, <<"bb">>, <<"c">>, <<"dd">>}, 
        split_pre_and_suffix(<<"aabbdd">>, <<"aacdd">>)),
+
+    ?assertEqual({<<"cat ">>, <<>>, <<"mouse dog ">>, <<>>},
+                 split_pre_and_suffix(<<"cat ">>, <<"cat mouse dog ">>)),
+
     ok. 
 
 unique_match_test() ->
@@ -1161,6 +1209,5 @@ diff_linemode_test() ->
         diff_linemode(<<"hello\nworld\n">>, <<"hello\nmaas\n">>)),
 
     ok.
-
 
 -endif.
