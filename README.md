@@ -1,6 +1,6 @@
 # Diffy
 
-[![Build Status](https://travis-ci.org/zotonic/diffy.svg?branch=master)](https://travis-ci.org/zotonic/diffy)
+![Test](https://github.com/zotonic/diffy/workflows/Test/badge.svg)
 
 Diff, Match and Patch implementation for Erlang. 
 
