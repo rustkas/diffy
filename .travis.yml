@@ -1,7 +1,0 @@
-language: erlang
-otp_release:
-  - 21.3
-  - 20.3
-  - 19.3
-sudo: false
-script: make test

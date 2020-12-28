@@ -19,10 +19,16 @@ compile: $(REBAR)
 
 test: eunit
 
-eunit: $(REBAR) compile
-	$(REBAR) eunit
+eunit: $(REBAR)
+	$(REBAR) as test eunit
 
-clean: rebar
+xref: $(REBAR)
+	$(REBAR) as test xref
+
+dialyzer: $(REBAR)
+	$(REBAR) as test dialyzer
+
+clean: $(REBAR)
 	$(REBAR) clean
 
 distclean:

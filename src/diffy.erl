@@ -51,6 +51,8 @@
 -type diff() :: {diff_op(), unicode:unicode_binary()}.
 -type diffs() :: list(diff()).
 
+-type for_fun() :: fun((integer(), term()) -> {continue, term()} | {break, term()}).
+
 -export_type([diffs/0]).
 
 -define(PATCH_MARGIN, 4).
@@ -830,16 +832,17 @@ match_reverse(X1, Y1, _, _, _, _) ->
 for(From, To, Fun, State) ->
     for(From, To, 1, Fun, State).
 
+-spec for(integer(), integer(), integer(), for_fun(), term()) -> term().
 for(From, To, _Step, _Fun, State) when From >= To ->
     State;
 for(From, To, Step, Fun, State) ->
     case Fun(From, State) of
-        {continue, S1} -> 
+        {continue, S1} ->
             for(From + Step, To, Step, Fun, S1);
         {break, S1} ->
             S1
     end.
-        
+
 split_pre_and_suffix(Text1, Text2) ->
     Prefix = common_prefix(Text1, Text2),
     PrefixLen = size(Prefix),
