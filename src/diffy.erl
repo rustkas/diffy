@@ -48,7 +48,7 @@
 ]).
 
 -type diff_op() :: delete | equal | insert.
--type diff() :: {diff_op(), term()}.
+-type diff() :: {diff_op(), unicode:unicode_binary()}.
 -type diffs() :: list(diff()).
 
 -type for_fun() :: fun((integer(), term()) -> {continue, term()} | {break, term()}).

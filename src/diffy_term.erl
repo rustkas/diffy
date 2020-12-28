@@ -25,7 +25,13 @@
     diff/2
 ]).
 
--spec diff(list(), list()) -> diffy:diffs().
+-type diff_op() :: delete | equal | insert.
+-type diff() :: {diff_op(), term()}.
+-type diffs() :: list(diff()).
+
+-export_type([ diffs/0 ]).
+
+-spec diff(list(), list()) -> diffs().
 diff(A, A) ->
     [{equal, A}];
 diff(A, []) ->
