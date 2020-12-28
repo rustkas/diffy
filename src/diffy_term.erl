@@ -25,12 +25,6 @@
     diff/2
 ]).
 
--type diff_op() :: delete | equal | insert.
--type diff() :: {diff_op(), unicode:unicode_binary()}.
--type diffs() :: list(diff()).
-
--export_type([diffs/0]).
-
 -spec diff(list(), list()) -> diffy:diffs().
 diff(A, A) ->
     [{equal, A}];
