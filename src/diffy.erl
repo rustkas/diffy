@@ -864,7 +864,7 @@ common_prefix(Text1, Text2) ->
     Length = binary:longest_common_prefix([Text1, Text2]),
     Prefix = binary:part(Text1, 0, Length),
     
-    %% Utf-8 repair the tail of the prefix. It could contain a half utf-9 char.
+    %% Utf-8 repair the tail of the prefix. It could contain a half utf-8 char.
     {Prefix1, _} = repair_tail(Prefix),
     Prefix1.
 
@@ -923,6 +923,7 @@ repair_tail(Bin) ->
         %% Valid 1 -byte
         <<_:Size1/binary, 2#0:1, _A:7>> ->
              {Bin, <<>>}; 
+
         %% Invalid 1-byte
         <<Pre:Size1/binary, 2#110:3, A:5>> ->
             {Pre, <<2#110:3, A:5>>};
@@ -934,6 +935,7 @@ repair_tail(Bin) ->
         %% Valid 2-byte ending
         <<_:Size2/binary, 2#110:3, _A:5, 2#10:2, _B:6>> ->
              {Bin, <<>>};
+
         %% Invalid 2-byte ending
         <<Pre:Size2/binary, 2#1110:4, A:4, 2#10:2, B:6>> ->
             {Pre, <<2#1110:4, A:4, 2#10:2, B:6>>};
@@ -943,8 +945,9 @@ repair_tail(Bin) ->
         %% Valid 3-byte ending
         <<_:Size3/binary, 2#1110:4, _A:4,  2#10:2, _B:6,  2#10:2, _C:6>> ->
              {Bin, <<>>};
+
         %% Invalid 3-byte ending
-        <<Pre:Size4/binary, 2#11110:5, A:3,  2#10:2, B:6, 2#10:2, C:6>> ->
+        <<Pre:Size3/binary, 2#11110:5, A:3,  2#10:2, B:6, 2#10:2, C:6>> ->
             {Pre, <<2#11110:5, A:3, 2#10:2, B:6, 2#10:2, C:6>>};
 
         %% Valid 4-byte ending
@@ -1012,6 +1015,8 @@ repair_tail_test() ->
     ?assertEqual({<<1000/utf8>>, <<>>}, repair_tail(<<1000/utf8>>)),
 
     ?assertEqual({<<"aap">>, <<200>>}, repair_tail(<<"aap", 200>>)),
+
+    ?assertEqual({<<"test">>, <<240, 159, 159>>}, repair_tail(<<116,101,115,116,240,159,159>>)),
 
     ok.
 
@@ -1131,7 +1136,21 @@ common_prefix_test() ->
     ?assertEqual(<<>>, common_prefix(<<"Text">>, <<"Next">>)),
     ?assertEqual(<<"T">>, common_prefix(<<"Text">>, <<"Tax">>)),
     ?assertEqual(<<"text">>, common_prefix(<<"text">>, <<"text">>)),
+
+    ?assertEqual(<<"test🟡"/utf8>>, common_prefix(<<"test🟡123"/utf8>>, <<"test🟡456"/utf8>>)),
+
+    ?assertEqual(<<"test">>, common_prefix(<<"test🟢123"/utf8>>, <<"test🟡123"/utf8>>)),
+    ?assertEqual(<<"test">>, common_prefix(<<"test🟡123"/utf8>>, <<"test🟢123"/utf8>>)),
+    
+    ?assertEqual(<<"test">>, common_prefix(<<"test🟡123"/utf8>>, <<"test🔵123"/utf8>>)),
+    ?assertEqual(<<"test">>, common_prefix(<<"test🔵123"/utf8>>, <<"test🟡123"/utf8>>)),
+
+    ?assertEqual(<<"test">>, common_prefix(<<"test🟡123"/utf8>>, <<"test⚫️123"/utf8>>)),
+    ?assertEqual(<<"test">>, common_prefix(<<"test⚫️123"/utf8>>, <<"test🟡123"/utf8>>)),
+
+
     ok.
+
 
 common_suffix_test() ->
     ?assertEqual(<<"ext">>, common_suffix(<<"Text">>, <<"Next">>)),

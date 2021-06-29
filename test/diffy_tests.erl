@@ -54,8 +54,9 @@ prop_cleanup_efficiency() ->
 html_like() ->
     proper_types:resize(200,
                         list(frequency([{80, range($a, $z)},       % letters
-                                        {20, oneof(["&amp;", "&gt;", "<script>", "<br />", "<p>", "</p>", "<div>", "</div>"])}, % tags
-                                        {2, range(16#80, 16#7FF)}, % a couple of 2-byte unicode chars
+                                        {18, oneof(["&amp;", "&gt;", "<script>", "<br />", "<p>", "</p>", "<div>", "</div>"])}, % tags
+                                        {2, utf8(1)},
+                                        {2, utf8(2)},
                                         {2, range($0, $9)},        % numbers
                                         {2, $\s},                  % whitespace
                                         {4,  $\n},                 % linebreaks
@@ -65,29 +66,51 @@ html_like() ->
 prop_make_diff() ->
     ?FORALL({S, D}, {html_like(), html_like()},
         begin
-            SourceText = unicode:characters_to_binary(lists:flatten(S), utf32, utf8),
-            DestinationText = unicode:characters_to_binary(lists:flatten(D), utf32, utf8),
+            SourceText = iolist_to_binary(S),
+            DestinationText = iolist_to_binary(D),
 
             Patches = diffy:diff(SourceText, DestinationText),
 
-            SourceText == diffy:source_text(Patches) andalso DestinationText == diffy:destination_text(Patches)
+            is_valid_patch(Patches) andalso
+                (SourceText == diffy:source_text(Patches) andalso DestinationText == diffy:destination_text(Patches))
         end).
 
 prop_inner_diff() ->
     ?FORALL({OP, IO, IN, OS}, {html_like(), html_like(), html_like(), html_like()},
         begin
-            OuterPrefix = unicode:characters_to_binary(lists:flatten(OP), utf32, utf8),
-            InnerOld = unicode:characters_to_binary(lists:flatten(IO), utf32, utf8),
-            InnerNew = unicode:characters_to_binary(lists:flatten(IN), utf32, utf8),
-            OuterSuffix = unicode:characters_to_binary(lists:flatten(OS), utf32, utf8),
+            OuterPrefix = iolist_to_binary(OP),
+            InnerOld = iolist_to_binary(IO),
+            InnerNew = iolist_to_binary(IN),
+            OuterSuffix = iolist_to_binary(OS),
 
             SourceText = <<OuterPrefix/binary, InnerOld/binary, OuterSuffix/binary>>,
             DestinationText = <<OuterPrefix/binary, InnerNew/binary, OuterSuffix/binary>>,
 
             Patches = diffy:diff(SourceText, DestinationText),
 
-            SourceText == diffy:source_text(Patches) andalso DestinationText == diffy:destination_text(Patches)
+            is_valid_patch(Patches) andalso 
+                (SourceText == diffy:source_text(Patches) andalso DestinationText == diffy:destination_text(Patches))
         end).
+
+
+is_valid_patch([]) ->
+    true;
+is_valid_patch([{Op, Bin} | Rest]) when Op =:= insert orelse Op =:= delete orelse Op =:= equal ->
+    case is_valid_utf8_binary(Bin) of
+        true ->
+            is_valid_patch(Rest);
+        false ->
+            false
+    end;
+is_valid_patch(_) ->
+    false.
+
+is_valid_utf8_binary(<<>>) ->
+    true;
+is_valid_utf8_binary(<<_C/utf8, Rest/binary>>) ->
+    is_valid_utf8_binary(Rest);
+is_valid_utf8_binary(_) ->
+    false.
 
 %%
 %% Tests
