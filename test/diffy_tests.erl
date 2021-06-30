@@ -53,10 +53,9 @@ prop_cleanup_efficiency() ->
 
 html_like() ->
     proper_types:resize(200,
-                        list(frequency([{80, range($a, $z)},       % letters
-                                        {18, oneof(["&amp;", "&gt;", "<script>", "<br />", "<p>", "</p>", "<div>", "</div>"])}, % tags
-                                        {2, utf8(1)},
-                                        {2, utf8(2)},
+                        list(frequency([{70, range($a, $z)},       % letters
+                                        {20, oneof(["&amp;", "&gt;", "<script>", "<br />", "<p>", "</p>", "<div>", "</div>"])}, % tags
+                                        {2, utf8(4)},              % Some small portions of unicode chars.
                                         {2, range($0, $9)},        % numbers
                                         {2, $\s},                  % whitespace
                                         {4,  $\n},                 % linebreaks
