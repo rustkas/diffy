@@ -91,7 +91,8 @@ prop_inner_diff() ->
                 (SourceText == diffy:source_text(Patches) andalso DestinationText == diffy:destination_text(Patches))
         end).
 
-
+%% Return true iff the parameter which is passed is a valid patch.
+%%
 is_valid_patch([]) ->
     true;
 is_valid_patch([{Op, Bin} | Rest]) when Op =:= insert orelse Op =:= delete orelse Op =:= equal ->
@@ -104,6 +105,8 @@ is_valid_patch([{Op, Bin} | Rest]) when Op =:= insert orelse Op =:= delete orels
 is_valid_patch(_) ->
     false.
 
+%% Return true if the parameter passed is a valid utf-8 binary.
+%%
 is_valid_utf8_binary(<<>>) ->
     true;
 is_valid_utf8_binary(<<_C/utf8, Rest/binary>>) ->
