@@ -52,7 +52,7 @@ prop_cleanup_efficiency() ->
         end).
 
 html_like() ->
-    proper_types:resize(200,
+    proper_types:resize(300,
                         list(frequency([{70, range($a, $z)},       % letters
                                         {20, oneof(["&amp;", "&gt;", "<script>", "<br />", "<p>", "</p>", "<div>", "</div>"])}, % tags
                                         {2, utf8(4)},              % Some small portions of unicode chars.
@@ -321,6 +321,23 @@ diff_test() ->
     ok.
 
 
+speed_test() ->
+    TextA = unicode:characters_to_binary(text_a(), utf8),
+    TextB = unicode:characters_to_binary(text_b(), utf8),
+
+
+    F = fun() ->
+                Diffs = diffy:diff(TextA, TextB),
+                CleanedDiffs = diffy:cleanup_efficiency(Diffs),
+                Patch = diffy_simple_patch:make_patch(CleanedDiffs)
+        end,
+
+
+    io:fwrite(standard_error, "T: ~p~n", [timer:tc(F)]),
+
+    ok.
+
+
 %%
 %% Helpers
 %%
@@ -336,3 +353,436 @@ cleanup_semantic(Diffs) ->
 
 cleanup_merge(Diffs) ->
     diffy:cleanup_merge(Diffs).
+
+
+text_a() ->
+    "<div class=\"card card-chat border-0 ps-lg-2\">
+
+    
+<div class=\"d-flex justify-content-between\">
+    <div class=\"d-flex \">
+        <a href=\"/chat\" class=\"d-flex align-items-center d-md-none d-lg-none\">
+            <img src=\"/lib/images/back.svg\" width=\"20\" height=\"20\">
+        </a>
+        
+        <div class=\"d-flex\">
+            
+                <div class=\"d-flex flex-column m-1\">
+                    <div class=\"d-flex justify-content-center\">
+                        
+
+    <img src=\"/image/2021/6/30/4f2162ab_a987_437b_ac07_1dfdf3ad3d8e.jpg%2832x32%29%2842A83BBFAED0A4CEDDBAF233F33FB969%29.jpg\" alt=\"\" width=\"24\" height=\"32\" class=\"rounded-circle\">
+
+
+                    </div>
+                    <small class=\"m-0\">Maas
+</small>
+                </div>
+            
+                <div class=\"d-flex flex-column m-1\">
+                    <div class=\"d-flex justify-content-center\">
+                        
+
+    <img src=\"/image/2021/6/23/img_1295.jpg%2832x32%29%28FCFD7F4337187F3902537EEFAC0C0028%29.jpg\" alt=\"\" width=\"24\" height=\"32\" class=\"rounded-circle\">
+
+
+                    </div>
+                    <small class=\"m-0\">Justin
+</small>
+                </div>
+            
+        </div>
+        
+    </div>                    
+
+    <details class=\"menu\">
+        <summary>
+            <span class=\"btn btn-outline-dark  mt-1 me-1 rounded-pill px-3 ms-auto\">Menu</span>
+        </summary>
+        <details-menu>
+
+            <div class=\"m-2\" style=\"width:200px\">
+
+                <div>
+                    <a href=\"#\" class=\"btn btn-outline-dark  w-100 mt-1 me-1 rounded-pill px-3 ms-auto\">Report</a>
+                </div>
+
+                <a href=\"#\" class=\"btn btn-outline-dark w-100 mt-1 me-1 rounded-pill px-3 ms-auto\">Follow</a>
+            </div>
+        </details-menu>
+    </details>
+</div>
+
+
+
+    <div class=\"bubble-subject\">
+    <a href=\"/page/822\" class=\"text-decoration-none text-white\">
+        <div class=\"bubble subject card shadow-sm py-2 my-2 bg-dark text-white\">
+            <small class=\"serrif fs-6\">
+    
+    
+        
+    
+    I'm baby helvetica retro chia cray VHS irony fixie godard fa…
+</small>
+        </div>
+    </a>
+</div>
+
+
+    
+    
+    <div key=\"messages\" class=\"vh-100 bubble-container\">
+        <div class=\"w-100\">
+            
+
+            
+                
+                    
+
+<div class=\"bubble-group my-2 user color-5 user-520\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/23/img_1295.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Justin
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>🤣 Whaha mooi verhaal, lekker kort ook</span>
+        </div>
+    
+</div>
+
+
+
+
+                
+                    
+
+<div class=\"bubble-group my-2 user color-1 user-504\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/30/4f2162ab_a987_437b_ac07_1dfdf3ad3d8e.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Maas
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>Green juice Polaroid farm. </span>
+        </div>
+    
+</div>
+
+
+
+
+                
+                    
+
+<div class=\"bubble-group my-2 user color-5 user-520\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/23/img_1295.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Justin
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>Doet me denken aan shirts uit china, die printen random woorden op een shirt, woorden die ze mooi vinden haha
+</span>
+        </div>
+    
+</div>
+
+
+
+
+                
+            
+        </div>
+    </div>
+
+    
+    <div key=\"who-is-typing\" class=\"d-flex flex-row justify-content-start px-2\" style=\"min-height:20px;\">
+        
+    </div>
+
+   
+   <div key=\"input-box\" class=\"chat-input-box px-2 pt-1 pb-2\">
+       <form class=\"d-flex align-items-end\" data-onsubmit-topic=\"bridge/origin/model/rsc_chat/post/834/message\" data-onsubmit-reset=\"\" data-onsubmit-cancel=\"preventDefault\">
+           <textarea rows=\"1\" class=\"form-control\" name=\"message\" spellcheck=\"true\" data-is-typing-topic=\"bridge/origin/model/rsc_chat/post/834/is_typing\" data-is-chat-input=\"true\"></textarea>
+           <button class=\"btn btn-primary ms-2\" type=\"submit\"><img src=\"/lib/images/arrow-up-white.svg\" height=\"20\" width=\"20\"></button>
+       </form>
+   </div>
+
+</div>".
+
+
+text_b() ->
+    "<div class=\"card card-chat border-0 ps-lg-2\">
+
+    
+<div class=\"d-flex justify-content-between\">
+    <div class=\"d-flex \">
+        <a href=\"/chat\" class=\"d-flex align-items-center d-md-none d-lg-none\">
+            <img src=\"/lib/images/back.svg\" width=\"20\" height=\"20\">
+        </a>
+        
+        <div class=\"d-flex\">
+            
+                <div class=\"d-flex flex-column m-1\">
+                    <div class=\"d-flex justify-content-center\">
+                        
+
+    <img src=\"/image/2021/6/30/4f2162ab_a987_437b_ac07_1dfdf3ad3d8e.jpg%2832x32%29%2842A83BBFAED0A4CEDDBAF233F33FB969%29.jpg\" alt=\"\" width=\"24\" height=\"32\" class=\"rounded-circle\">
+
+
+                    </div>
+                    <small class=\"m-0\">Maas
+</small>
+                </div>
+            
+                <div class=\"d-flex flex-column m-1\">
+                    <div class=\"d-flex justify-content-center\">
+                        
+
+    <img src=\"/image/2021/6/23/img_1295.jpg%2832x32%29%28FCFD7F4337187F3902537EEFAC0C0028%29.jpg\" alt=\"\" width=\"24\" height=\"32\" class=\"rounded-circle\">
+
+
+                    </div>
+                    <small class=\"m-0\">Justin
+</small>
+                </div>
+            
+        </div>
+        
+    </div>                    
+
+    <details class=\"menu\">
+        <summary>
+            <span class=\"btn btn-outline-dark  mt-1 me-1 rounded-pill px-3 ms-auto\">Menu</span>
+        </summary>
+        <details-menu>
+
+            <div class=\"m-2\" style=\"width:200px\">
+
+                <div>
+                    <a href=\"#\" class=\"btn btn-outline-dark  w-100 mt-1 me-1 rounded-pill px-3 ms-auto\">Report</a>
+                </div>
+
+                <a href=\"#\" class=\"btn btn-outline-dark w-100 mt-1 me-1 rounded-pill px-3 ms-auto\">Follow</a>
+            </div>
+        </details-menu>
+    </details>
+</div>
+
+
+
+    <div class=\"bubble-subject\">
+    <a href=\"/page/822\" class=\"text-decoration-none text-white\">
+        <div class=\"bubble subject card shadow-sm py-2 my-2 bg-dark text-white\">
+            <small class=\"serrif fs-6\">
+    
+    
+        
+    
+    I'm baby helvetica retro chia cray VHS irony fixie godard fa…
+</small>
+        </div>
+    </a>
+</div>
+
+
+    
+    
+    <div key=\"messages\" class=\"vh-100 bubble-container\">
+        <div class=\"w-100\">
+            
+
+            
+                
+                    
+
+<div class=\"bubble-group my-2 user color-5 user-520\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/23/img_1295.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Justin
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>🤣 Whaha mooi verhaal, lekker kort ook</span>
+        </div>
+    
+</div>
+
+
+
+
+                
+                    
+
+<div class=\"bubble-group my-2 user color-1 user-504\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/30/4f2162ab_a987_437b_ac07_1dfdf3ad3d8e.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Maas
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>Green juice Polaroid farm. </span>
+        </div>
+    
+</div>
+
+
+
+
+                
+                    
+
+<div class=\"bubble-group my-2 user color-5 user-520\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/23/img_1295.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Justin
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>Doet me denken aan shirts uit china, die printen random woorden op een shirt, woorden die ze mooi vinden haha
+</span>
+        </div>
+    
+</div>
+
+
+
+
+                
+                    
+
+<div class=\"bubble-group my-2 user color-1 user-504\">
+
+    
+        <span class=\"bubble-name d-flex align-items-center\">
+            <div class=\"position-relative\">
+                
+                    <img src=\"/image/2021/6/30/4f2162ab_a987_437b_ac07_1dfdf3ad3d8e.jpg%28mediaclass-cafe-user-list-depiction.11531b487554e49ca9e77ec0ac4fb2bfd8d5ec32%29.jpg\" alt=\"\" class=\"cafe-user-list-depiction cafe-user-list-depiction rounded-circle\" width=\"32\" height=\"32\">
+                
+                
+                
+            </div>
+            
+            <div class=\" px-1\">Maas
+</div>
+            
+        </span>
+    
+
+    
+        <div class=\"bubble user\">
+            
+            <span>Dat verwacht ik altijd als mensen een Chinese tekst als tattoo hebben. Je zou denken dat er iets diepzinnigs staat, maar het zijn vast gewoon random woorden.
+</span>
+        </div>
+    
+</div>
+
+
+
+
+                
+            
+        </div>
+    </div>
+
+    
+    <div key=\"who-is-typing\" class=\"d-flex flex-row justify-content-start px-2\" style=\"min-height:20px;\">
+        
+    </div>
+
+   
+   <div key=\"input-box\" class=\"chat-input-box px-2 pt-1 pb-2\">
+       <form class=\"d-flex align-items-end\" data-onsubmit-topic=\"bridge/origin/model/rsc_chat/post/834/message\" data-onsubmit-reset=\"data-onsubmit-reset\" data-onsubmit-cancel=\"preventDefault\">
+           <textarea rows=\"1\" class=\"form-control\" name=\"message\" spellcheck=\"true\" data-is-typing-topic=\"bridge/origin/model/rsc_chat/post/834/is_typing\" data-is-chat-input=\"true\" style=\"\"></textarea>
+           <button class=\"btn btn-primary ms-2\" type=\"submit\"><img src=\"/lib/images/arrow-up-white.svg\" height=\"20\" width=\"20\"></button>
+       </form>
+   </div>
+
+</div>".
