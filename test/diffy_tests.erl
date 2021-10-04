@@ -327,9 +327,12 @@ speed_test() ->
 
 
     F = fun() ->
-                Diffs = diffy:diff(TextA, TextB),
-                CleanedDiffs = diffy:cleanup_efficiency(Diffs),
-                Patch = diffy_simple_patch:make_patch(CleanedDiffs)
+                lists:foreach(fun(_) ->
+                                      Diffs = diffy:diff(TextA, TextB),
+                                      CleanedDiffs = diffy:cleanup_efficiency(Diffs),
+                                      Patch = diffy_simple_patch:make_patch(CleanedDiffs)
+                              end,
+                              [1,2,3,4,5,6,7,8,9,10])
         end,
 
 
