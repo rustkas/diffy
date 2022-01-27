@@ -535,7 +535,7 @@ pretty_html([{Op, Data}|T], Acc) ->
         delete ->
             [<<"<del style='background:#ffe6e6;'>">>, Text, <<"</del>">>];
         equal ->
-            [<<"<span>>">>, Text, <<"</span>">>]
+            [<<"<span>">>, Text, <<"</span>">>]
     end,
     pretty_html(T, [HTML|Acc]).
 
