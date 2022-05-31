@@ -21,7 +21,7 @@ test: eunit
 
 eunit: $(REBAR)
 	$(REBAR) as test eunit
-
+	
 xref: $(REBAR)
 	$(REBAR) as test xref
 
@@ -35,7 +35,15 @@ distclean:
 	rm -rf _build
 	rm $(REBAR)
 
+doc:  $(REBAR)
+	$(REBAR) edoc
 
+doc_private: $(REBAR)
+	$(REBAR) as doc_private edoc
+
+exdoc: $(REBAR)
+	$(REBAR) ex_doc --output exdoc --formatter html
+	
 # dializer 
 
 build-plt:
