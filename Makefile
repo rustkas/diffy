@@ -28,8 +28,13 @@ xref: $(REBAR)
 dialyzer: $(REBAR)
 	$(REBAR) as test dialyzer
 
-clean: $(REBAR)
+clean: $(REBAR) clean_doc
 	$(REBAR) clean
+
+clean_doc:
+	@rm -f doc/*.html
+	@rm -f doc/erlang.png
+	@rm -f doc/edoc-info
 
 distclean:
 	rm -rf _build
